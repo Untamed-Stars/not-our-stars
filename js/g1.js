@@ -48,6 +48,8 @@ window.NOS = {
     scene,
     camera,
     renderer
+
+    updateSystems: []
 };
 
 // RESIZE
