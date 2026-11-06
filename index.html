@@ -1,0 +1,41 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Not Our Stars</title>
+
+    <link rel="stylesheet" href="head.html">
+</head>
+
+<body>
+
+    <div id="game-root">
+
+        <div id="head-container"></div>
+        <div id="body-container"></div>
+
+    </div>
+
+    <script type="module">
+        async function loadFragment(id, file) {
+            const response = await fetch(file);
+
+            if (!response.ok) {
+                throw new Error(`Failed to load ${file}`);
+            }
+
+            document.getElementById(id).innerHTML =
+                await response.text();
+        }
+
+        await loadFragment('head-container', 'head.html');
+        await loadFragment('body-container', 'body.html');
+
+        await import('./js/g1.js');
+    </script>
+
+</body>
+</html>
