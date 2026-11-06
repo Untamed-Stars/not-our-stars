@@ -22,10 +22,10 @@ const PLAYER = {
     jumpForce: 8,
     gravity: 22,
 
-    jetpackForce: 16,
+    jetpackForce: 12,
     jetpackMaxFuel: 100,
-    jetpackDrain: 25,
-    jetpackRecharge: 15,
+    jetpackDrain: 8,
+    jetpackRecharge: 12,
 
     mouseSensitivity: 0.002
 
@@ -185,11 +185,15 @@ function updateMovement(dt) {
 // JUMPING
 // ----------------------------------------
 
+
 function updateJumping() {
+
+    // Jump only when jetpack isn't being activated.
 
     if (
         player.keys['Space'] &&
-        player.grounded
+        player.grounded &&
+        !player.keys['KeyX']
     ) {
 
         player.velocity.y = PLAYER.jumpForce;
@@ -204,40 +208,35 @@ function updateJumping() {
 // JETPACK
 // ----------------------------------------
 
-
 function updateJetpack(dt) {
 
-    const activating = player.keys['KeyX'];
-
-    player.jetpacking =
-        activating &&
+    const activating =
+        player.keys['KeyX'] &&
         player.jetpackFuel > 0;
 
-    if (player.jetpacking) {
+    player.jetpacking = activating;
 
-        // Jetpack can lift the player directly from the ground.
-        player.velocity.y = Math.max(
-            player.velocity.y,
-            0
+    if (activating) {
+
+        // Powered takeoff, even from the ground.
+
+        player.grounded = false;
+
+        player.velocity.y = Math.min(
+            player.velocity.y + PLAYER.jetpackForce * dt,
+            12
         );
-
-        player.velocity.y += PLAYER.jetpackForce * dt;
-
-        player.jetpackFuel -= PLAYER.jetpackDrain * dt;
 
         player.jetpackFuel = Math.max(
             0,
-            player.jetpackFuel
+            player.jetpackFuel - PLAYER.jetpackDrain * dt
         );
 
     } else if (player.grounded) {
 
-        player.jetpackFuel +=
-            PLAYER.jetpackRecharge * dt;
-
         player.jetpackFuel = Math.min(
             PLAYER.jetpackMaxFuel,
-            player.jetpackFuel
+            player.jetpackFuel + PLAYER.jetpackRecharge * dt
         );
 
     }
