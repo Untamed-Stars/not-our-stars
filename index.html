@@ -19,23 +19,31 @@
 
     </div>
 
-    <script type="module">
-        async function loadFragment(id, file) {
-            const response = await fetch(file);
+  <script type="module">
+    async function loadFragment(id, file) {
+        const response = await fetch(file);
 
-            if (!response.ok) {
-                throw new Error(`Failed to load ${file}`);
-            }
-
-            document.getElementById(id).innerHTML =
-                await response.text();
+        if (!response.ok) {
+            throw new Error(`Failed to load ${file}`);
         }
 
+        document.getElementById(id).innerHTML =
+            await response.text();
+    }
+
+    try {
         await loadFragment('head-container', 'head.html');
         await loadFragment('body-container', 'body.html');
 
         await import('./js/g1.js');
-    </script>
+        await import('./js/g2.js');
+        await import('./js/g3.js');
+        await import('./js/g4.js');
+
+    } catch (error) {
+        console.error('NOS INITIALISATION ERROR:', error);
+    }
+</script>
 
 </body>
 </html>
