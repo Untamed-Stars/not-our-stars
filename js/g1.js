@@ -65,17 +65,34 @@ window.addEventListener('resize', () => {
 
 });
 
-// MAIN LOOP
+// ----------------------------------------
+// MAIN GAME LOOP
+// ----------------------------------------
 
-function animate() {
+window.NOS.updateSystems = [];
+
+let previousTime = performance.now();
+
+function animate(now) {
 
     requestAnimationFrame(animate);
+
+    const dt = Math.min(
+        (now - previousTime) / 1000,
+        0.05
+    );
+
+    previousTime = now;
+
+    for (const update of window.NOS.updateSystems) {
+        update(dt);
+    }
 
     renderer.render(scene, camera);
 
 }
 
-animate();
+requestAnimationFrame(animate);
 
 document.getElementById('status').textContent =
     'SYSTEM ONLINE // EXPLORATION READY';
