@@ -245,4 +245,7 @@ window.NOS.world = {
 
 };
 
+document.getElementById('status').textContent =
+    'UNKNOWN PLANET // SHIP SYSTEMS OFFLINE';
+
 console.log("NOT OUR STARS: STARTING PLANET GENERATED");
