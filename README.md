@@ -43,17 +43,15 @@ To achieve the primary gameplay loop of reaching orbit and visiting the massive 
 
 [PLAYER WAKES UP ON PLANET]
 
-│
 ▼
 Gather: Ferrite 🔘 | Copper 🟠 | Silica 🔵
-│
+
 ▼
 
 REPAIR VANGUARD:
 🛠️ Basic Propulsion     🛠️ Launch Systems
 🛠️ Flight Stabilisation 🛠️ Power Distribution
 
-│
 ▼
 
 RESTORE ATMOSPHERIC FLIGHT
