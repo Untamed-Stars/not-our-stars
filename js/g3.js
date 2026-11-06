@@ -41,4 +41,6 @@ const stars = new THREE.Points(geometry, material);
 
 scene.add(stars);
 
+window.NOS.stars = stars;
+
 console.log('NOT OUR STARS: G3 ONLINE');
