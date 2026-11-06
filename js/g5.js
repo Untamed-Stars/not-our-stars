@@ -204,6 +204,7 @@ function updateJumping() {
 // JETPACK
 // ----------------------------------------
 
+
 function updateJetpack(dt) {
 
     const activating = player.keys['KeyX'];
@@ -213,6 +214,12 @@ function updateJetpack(dt) {
         player.jetpackFuel > 0;
 
     if (player.jetpacking) {
+
+        // Jetpack can lift the player directly from the ground.
+        player.velocity.y = Math.max(
+            player.velocity.y,
+            0
+        );
 
         player.velocity.y += PLAYER.jetpackForce * dt;
 
@@ -236,6 +243,7 @@ function updateJetpack(dt) {
     }
 
 }
+
 
 // ----------------------------------------
 // GRAVITY AND GROUND COLLISION
