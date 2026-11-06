@@ -1,23 +1,14 @@
 
+import * as THREE from 'three';
+
 // ========================================
-// G4 - STARTING PLANET
+// G4 - STARTING PLANET ENVIRONMENT
 // ========================================
 
-const { THREE, scene } = window.NOS;
+const { scene, camera } = window.NOS;
 
 // ----------------------------------------
-// PLANET CONFIGURATION
-// ----------------------------------------
-
-const PLANET = {
-    name: "UNKNOWN",
-    terrainSize: 600,
-    terrainSegments: 160,
-    centerZ: -100
-};
-
-// ----------------------------------------
-// ATMOSPHERE
+// ENVIRONMENT
 // ----------------------------------------
 
 scene.background = new THREE.Color(0x91b8ca);
@@ -25,227 +16,94 @@ scene.background = new THREE.Color(0x91b8ca);
 scene.fog = new THREE.Fog(
     0x91b8ca,
     100,
-    480
+    650
 );
-
-// Hide stars while on the planet.
 
 if (window.NOS.stars) {
     window.NOS.stars.visible = false;
 }
 
 // ----------------------------------------
-// TERRAIN HEIGHT
+// TERRAIN
 // ----------------------------------------
+
+const terrainSize = 1200;
+const terrainSegments = 180;
 
 function terrainHeight(x, z) {
 
-    const dx = x;
-    const dz = z - 10;
-
-    const distance = Math.sqrt(
-        dx * dx + dz * dz
-    );
-
-    // Flatten the starting area.
-
-    let blend = Math.min(distance / 38, 1);
-
-    blend = blend * blend * (3 - 2 * blend);
-
     const hills =
-        Math.sin(x * 0.025) * 2.2 +
-        Math.cos(z * 0.018) * 2.8 +
-        Math.sin((x + z) * 0.012) * 3.0;
+        Math.sin(x * 0.018) * 3 +
+        Math.cos(z * 0.022) * 3 +
+        Math.sin((x + z) * 0.012) * 2;
 
-    return hills * blend;
+    const distance = Math.sqrt(x * x + z * z);
+
+    const flatten = Math.min(distance / 40, 1);
+
+    return hills * flatten;
 }
 
-// ----------------------------------------
-// TERRAIN GENERATION
-// ----------------------------------------
+const geometry = new THREE.PlaneGeometry(
+    terrainSize,
+    terrainSize,
+    terrainSegments,
+    terrainSegments
+);
 
-function createTerrain() {
+const positions = geometry.attributes.position;
 
-    const geometry = new THREE.PlaneGeometry(
-        PLANET.terrainSize,
-        PLANET.terrainSize,
-        PLANET.terrainSegments,
-        PLANET.terrainSegments
+for (let i = 0; i < positions.count; i++) {
+
+    const x = positions.getX(i);
+    const z = -positions.getY(i);
+
+    positions.setZ(
+        i,
+        terrainHeight(x, z)
     );
 
-    const positions = geometry.attributes.position;
-
-    for (let i = 0; i < positions.count; i++) {
-
-        const x = positions.getX(i);
-        const localY = positions.getY(i);
-
-        const worldZ = PLANET.centerZ - localY;
-
-        const height = terrainHeight(x, worldZ);
-
-        positions.setZ(i, height);
-    }
-
-    geometry.rotateX(-Math.PI / 2);
-
-    geometry.computeVertexNormals();
-
-    const material = new THREE.MeshStandardMaterial({
-        color: 0x778d70,
-        roughness: 1,
-        metalness: 0
-    });
-
-    const terrain = new THREE.Mesh(
-        geometry,
-        material
-    );
-
-    terrain.position.z = PLANET.centerZ;
-
-    scene.add(terrain);
-
-    return terrain;
 }
 
-const terrain = createTerrain();
+geometry.rotateX(-Math.PI / 2);
+
+geometry.computeVertexNormals();
+
+const material = new THREE.MeshStandardMaterial({
+    color: 0x778d70,
+    roughness: 1,
+    metalness: 0
+});
+
+const terrain = new THREE.Mesh(
+    geometry,
+    material
+);
+
+terrain.position.set(0, 0, 0);
+
+scene.add(terrain);
 
 // ----------------------------------------
-// RESOURCE DEPOSITS
+// CAMERA START POSITION
 // ----------------------------------------
 
-const resources = [];
+camera.position.set(0, 1.7, 0);
 
-const RESOURCE_TYPES = {
-
-    ferrite: {
-        color: 0x929ba4,
-        name: "Ferrite"
-    },
-
-    copper: {
-        color: 0xb97848,
-        name: "Copper"
-    },
-
-    silica: {
-        color: 0x62c5cf,
-        name: "Silica"
-    }
-
-};
-
-function createResource(type, x, z) {
-
-    const config = RESOURCE_TYPES[type];
-
-    const group = new THREE.Group();
-
-    const material = new THREE.MeshStandardMaterial({
-        color: config.color,
-        roughness: 0.65,
-        metalness: 0.25,
-        emissive: config.color,
-        emissiveIntensity: 0.08,
-        flatShading: true
-    });
-
-    // Main mineral deposit.
-
-    const main = new THREE.Mesh(
-        new THREE.IcosahedronGeometry(1.5, 1),
-        material
-    );
-
-    main.position.y = 1.2;
-
-    main.scale.set(1, 1.3, 0.9);
-
-    group.add(main);
-
-    // Smaller mineral formations.
-
-    for (let i = 0; i < 3; i++) {
-
-        const crystal = new THREE.Mesh(
-            new THREE.IcosahedronGeometry(0.8, 0),
-            material
-        );
-
-        crystal.position.set(
-            Math.cos(i * 2.1) * 1.2,
-            0.7,
-            Math.sin(i * 2.1) * 1.2
-        );
-
-        group.add(crystal);
-    }
-
-    group.position.set(
-        x,
-        terrainHeight(x, z),
-        z
-    );
-
-    group.userData = {
-        resourceType: type,
-        resourceName: config.name,
-        amount: 10,
-        mined: false
-    };
-
-    group.traverse(object => {
-        if (object.isMesh) {
-            object.userData.resourceNode = group;
-        }
-    });
-
-    scene.add(group);
-
-    resources.push(group);
-
-    return group;
-}
-
-// Ferrite deposits.
-
-createResource("ferrite", -12, -8);
-createResource("ferrite", 22, -30);
-createResource("ferrite", -25, -38);
-createResource("ferrite", 35, 30);
-
-// Copper deposits.
-
-createResource("copper", 32, 12);
-createResource("copper", -35, 18);
-createResource("copper", 42, -45);
-
-// Silica deposits.
-
-createResource("silica", 5, -45);
-createResource("silica", -45, -12);
-createResource("silica", 48, 40);
+camera.rotation.set(0, 0, 0);
 
 // ----------------------------------------
 // WORLD DATA
 // ----------------------------------------
 
 window.NOS.world = {
-
-    name: PLANET.name,
-
-    terrain,
-    terrainHeight,
-
-    resources,
-
+    name: "UNKNOWN",
+    terrain: terrain,
+    terrainHeight: terrainHeight,
     environment: "planetary"
-
 };
 
 document.getElementById('status').textContent =
-    'UNKNOWN PLANET // SHIP SYSTEMS OFFLINE';
+    'UNKNOWN PLANET // EXPLORATION READY';
 
-console.log("NOT OUR STARS: STARTING PLANET GENERATED");
+console.log('G4: STARTING PLANET ONLINE');
