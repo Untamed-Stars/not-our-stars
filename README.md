@@ -40,37 +40,37 @@
 
 To achieve the primary gameplay loop of reaching orbit and visiting the massive localized space station, specific ship sub-systems must be restored on the starting planet using gathered resources.
 
-┌─────────────────────────────────┐
-│   [PLAYER WAKES UP ON PLANET]   │
-└────────────────┬────────────────┘
+
+[PLAYER WAKES UP ON PLANET]
+
 │
 ▼
 Gather: Ferrite 🔘 | Copper 🟠 | Silica 🔵
 │
 ▼
-┌───────────────────────────────────────────────────┐
-│ REPAIR VANGUARD:                                  │
-│ 🛠️ Basic Propulsion     🛠️ Launch Systems          │
-│ 🛠️ Flight Stabilisation 🛠️ Power Distribution     │
-└─────────────────────────┬─────────────────────────┘
+
+REPAIR VANGUARD:
+🛠️ Basic Propulsion     🛠️ Launch Systems
+🛠️ Flight Stabilisation 🛠️ Power Distribution
+
 │
 ▼
-┌─────────────────────────────────┐
-│      RESTORE ATMOSPHERIC FLIGHT │
-└────────────────┬────────────────┘
+
+RESTORE ATMOSPHERIC FLIGHT
+
 │
 ▼
-┌─────────────────────────────────┐
-│   LAUNCH INTO SPACE ENVIRONMENT │
-└────────────────┬────────────────┘
+
+LAUNCH INTO SPACE ENVIRONMENT
+
 │
 ▼
-┌───────────────────────────────────────────────────┐
-│ SPACE SYSTEM ACTIVITIES:                           │
-│ 🛰️ Dock at Space Station                           │
-│ 💳 Purchase Interplanetary Engine Upgrades         │
-│ 🌌 Blueprint Interstellar Jump Drive (Late Game)  │
-└───────────────────────────────────────────────────┘
+
+SPACE SYSTEM ACTIVITIES:
+🛰️ Dock at Space Station
+💳 Purchase Interplanetary Engine Upgrades
+🌌 Blueprint Interstellar Jump Drive
+
 
 ---
 
