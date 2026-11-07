@@ -1,7 +1,7 @@
 
  // ========================================
  // NOT OUR STARS
- // g3.js - PROCEDURAL STARFIELD
+ // g3.js - PROCEDURAL CELESTIAL STARFIELD
  // ========================================
 
 import * as THREE from 'three';
@@ -10,120 +10,226 @@ import * as THREE from 'three';
 // STARFIELD SETTINGS
 // ========================================
 
-const STAR_COUNT = 1500;
-const STAR_RADIUS = 850;
-const MIN_STAR_DISTANCE = 30;
-const MAX_ATTEMPTS = 150000;
+const STAR_COUNT = 6000;
+const STAR_RADIUS = 900;
 
-// Star size categories, in pixels.
+const MIN_ANGULAR_DISTANCE = 0.018;
+
+const MAX_ATTEMPTS = 100000;
+
+const STAR_SEED = 734921;
+
 const STAR_SIZES = {
     small: 1.3,
-    medium: 1.8,
-    large: 2.4
+    medium: 1.9,
+    large: 2.5
 };
 
 // ========================================
-// RANDOM STAR POSITION
+// SEEDED RANDOM GENERATOR
 // ========================================
 
-function randomPointOnSphere(radius) {
+function createRandom(seed) {
 
-    const y = Math.random() * 2 - 1;
-    const angle = Math.random() * Math.PI * 2;
+    let state = seed >>> 0;
+
+    return function () {
+
+        state += 0x6D2B79F5;
+
+        let value = state;
+
+        value = Math.imul(
+            value ^ (value >>> 15),
+            value | 1
+        );
+
+        value ^= value + Math.imul(
+            value ^ (value >>> 7),
+            value | 61
+        );
+
+        return (
+            (value ^ (value >>> 14)) >>> 0
+        ) / 4294967296;
+    };
+}
+
+// ========================================
+// RANDOM UNIT VECTOR
+// ========================================
+
+function randomDirection(random) {
+
+    const y = random() * 2 - 1;
+    const angle = random() * Math.PI * 2;
 
     const horizontal = Math.sqrt(1 - y * y);
 
     return new THREE.Vector3(
-        Math.cos(angle) * horizontal * radius,
-        y * radius,
-        Math.sin(angle) * horizontal * radius
+        Math.cos(angle) * horizontal,
+        y,
+        Math.sin(angle) * horizontal
     );
 }
 
 // ========================================
-// STAR GENERATION
+// STAR DISTRIBUTION
 // ========================================
 
-function generateStarPositions(camera) {
+function generateStars() {
 
-    const positions = [];
+    const random = createRandom(STAR_SEED);
 
-    const distance = STAR_RADIUS;
-    const minDistance = MIN_STAR_DISTANCE;
+    const stars = [];
+
+    const cellSize =
+        MIN_ANGULAR_DISTANCE / Math.sqrt(3);
 
     const minDistanceSquared =
-        minDistance * minDistance;
+        MIN_ANGULAR_DISTANCE *
+        MIN_ANGULAR_DISTANCE;
 
-    const aspect = camera.aspect;
-    const halfFov = THREE.MathUtils.degToRad(
-        camera.fov / 2
-    );
+    const spatialGrid = new Map();
 
-    const halfHeight = Math.tan(halfFov) * distance;
-    const halfWidth = halfHeight * aspect;
+    function getCell(direction) {
 
-    // Extend beyond the viewport edges.
-    const coverage = 1.25;
+        return [
+            Math.floor(direction.x / cellSize),
+            Math.floor(direction.y / cellSize),
+            Math.floor(direction.z / cellSize)
+        ];
+    }
 
-    const width = halfWidth * coverage;
-    const height = halfHeight * coverage;
+    function cellKey(x, y, z) {
+        return `${x},${y},${z}`;
+    }
 
     let attempts = 0;
-    const maxAttempts = 150000;
 
     while (
-        positions.length < STAR_COUNT &&
-        attempts < maxAttempts
+        stars.length < STAR_COUNT &&
+        attempts < MAX_ATTEMPTS
     ) {
 
         attempts++;
 
-        const candidate = new THREE.Vector3(
-            (Math.random() * 2 - 1) * width,
-            (Math.random() * 2 - 1) * height,
-            -distance
-        );
+        const direction = randomDirection(random);
+
+        const [cx, cy, cz] = getCell(direction);
 
         let valid = true;
 
-        for (const existing of positions) {
+        // Check neighbouring spatial cells.
+        for (
+            let x = cx - 2;
+            x <= cx + 2 && valid;
+            x++
+        ) {
 
-            if (
-                candidate.distanceToSquared(existing) <
-                minDistanceSquared
+            for (
+                let y = cy - 2;
+                y <= cy + 2 && valid;
+                y++
             ) {
-                valid = false;
-                break;
+
+                for (
+                    let z = cz - 2;
+                    z <= cz + 2;
+                    z++
+                ) {
+
+                    const nearby = spatialGrid.get(
+                        cellKey(x, y, z)
+                    );
+
+                    if (!nearby) continue;
+
+                    for (const existing of nearby) {
+
+                        if (
+                            direction.distanceToSquared(existing) <
+                            minDistanceSquared
+                        ) {
+
+                            valid = false;
+                            break;
+                        }
+                    }
+
+                    if (!valid) break;
+                }
             }
         }
 
-        if (valid) {
-            positions.push(candidate);
+        if (!valid) continue;
+
+        // Accept this star.
+        stars.push({
+            direction,
+            brightness: 0,
+            size: 'small'
+        });
+
+        const key = cellKey(cx, cy, cz);
+
+        if (!spatialGrid.has(key)) {
+            spatialGrid.set(key, []);
+        }
+
+        spatialGrid.get(key).push(direction);
+    }
+
+    // Assign size and brightness.
+    for (const star of stars) {
+
+        const roll = random();
+
+        if (roll < 0.72) {
+
+            star.size = 'small';
+
+            star.brightness =
+                0.45 + random() * 0.3;
+
+        } else if (roll < 0.95) {
+
+            star.size = 'medium';
+
+            star.brightness =
+                0.7 + random() * 0.25;
+
+        } else {
+
+            star.size = 'large';
+
+            star.brightness =
+                0.9 + random() * 0.1;
         }
     }
 
     console.log(
-        `[NOS] Generated ${positions.length} viewport stars.`
+        `[NOS] Generated ${stars.length} persistent stars.`
     );
 
-    return positions;
+    return stars;
 }
 
 // ========================================
-// STARFIELD CREATION
+// CREATE STAR GROUP
 // ========================================
 
-function createStarGroup(stars, size, opacity) {
+function createStarGroup(stars, size) {
 
     if (stars.length === 0) return null;
 
     const geometry = new THREE.BufferGeometry();
 
-    const positionArray = new Float32Array(
+    const positions = new Float32Array(
         stars.length * 3
     );
 
-    const colorArray = new Float32Array(
+    const colors = new Float32Array(
         stars.length * 3
     );
 
@@ -131,23 +237,35 @@ function createStarGroup(stars, size, opacity) {
 
         const star = stars[i];
 
-        positionArray[i * 3] = star.position.x;
-        positionArray[i * 3 + 1] = star.position.y;
-        positionArray[i * 3 + 2] = star.position.z;
+        const position = star.direction
+            .clone()
+            .multiplyScalar(STAR_RADIUS);
 
-        colorArray[i * 3] = star.brightness;
-        colorArray[i * 3 + 1] = star.brightness;
-        colorArray[i * 3 + 2] = star.brightness;
+        positions[i * 3] = position.x;
+        positions[i * 3 + 1] = position.y;
+        positions[i * 3 + 2] = position.z;
+
+        // Subtle white and blue variation.
+        const blueTint = Math.random() * 0.08;
+
+        colors[i * 3] =
+            star.brightness;
+
+        colors[i * 3 + 1] =
+            star.brightness - blueTint;
+
+        colors[i * 3 + 2] =
+            star.brightness;
     }
 
     geometry.setAttribute(
         'position',
-        new THREE.BufferAttribute(positionArray, 3)
+        new THREE.BufferAttribute(positions, 3)
     );
 
     geometry.setAttribute(
         'color',
-        new THREE.BufferAttribute(colorArray, 3)
+        new THREE.BufferAttribute(colors, 3)
     );
 
     const material = new THREE.PointsMaterial({
@@ -160,7 +278,7 @@ function createStarGroup(stars, size, opacity) {
 
         transparent: true,
 
-        opacity,
+        opacity: 1,
 
         depthWrite: false,
 
@@ -175,9 +293,9 @@ function createStarGroup(stars, size, opacity) {
 // INITIALISE STARFIELD
 // ========================================
 
-export function initialiseStarfield(camera) {
+export function initialiseStarfield(scene, camera) {
 
-    const positions = generateStarPositions(camera);
+    const stars = generateStars();
 
     const groups = {
         small: [],
@@ -185,50 +303,44 @@ export function initialiseStarfield(camera) {
         large: []
     };
 
-    // Assign each star a size and brightness.
-    for (const position of positions) {
-
-        const roll = Math.random();
-
-        let category;
-
-        if (roll < 0.72) {
-            category = 'small';
-        } else if (roll < 0.95) {
-            category = 'medium';
-        } else {
-            category = 'large';
-        }
-
-        let brightness;
-
-        if (category === 'small') {
-            brightness = 0.45 + Math.random() * 0.3;
-        } else if (category === 'medium') {
-            brightness = 0.7 + Math.random() * 0.25;
-        } else {
-            brightness = 0.9 + Math.random() * 0.1;
-        }
-
-        groups[category].push({
-            position,
-            brightness
-        });
+    for (const star of stars) {
+        groups[star.size].push(star);
     }
 
-    // Create the three star layers.
+    const starfield = new THREE.Group();
+
+    // Create the three star-size layers.
     for (const category of Object.keys(groups)) {
 
-        const starGroup = createStarGroup(
+        const points = createStarGroup(
             groups[category],
-            STAR_SIZES[category],
-            1.0
+            STAR_SIZES[category]
         );
 
-        if (starGroup) {
-            camera.add(starGroup);
+        if (points) {
+            starfield.add(points);
         }
     }
 
-    console.log('[NOS] Starfield initialised.');
+    // Start at the camera's world position.
+    camera.getWorldPosition(starfield.position);
+
+    // Add to the scene, NOT the camera.
+    scene.add(starfield);
+
+    console.log('[NOS] Persistent starfield initialised.');
+
+    return starfield;
+}
+
+// ========================================
+// UPDATE STARFIELD POSITION
+// ========================================
+
+export function updateStarfield(starfield, camera) {
+
+    if (!starfield) return;
+
+    // Follow camera position without following rotation.
+    camera.getWorldPosition(starfield.position);
 }
