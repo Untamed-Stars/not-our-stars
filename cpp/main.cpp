@@ -1,26 +1,47 @@
 
-// main.cpp - NOT OUR STARS C++ ENTRY POINT
-
 #include <emscripten.h>
 
+#include "core/g1.hpp"
+
 // ========================================
-// ARCHITECTURE TEST SIMULATION
+// NOT OUR STARS
+// main.cpp - APPLICATION ENTRY POINT
 // ========================================
 
-static float simulationValue = 0.0f;
+static Engine engine;
 
-// Increase the simulation value.
+// ========================================
+// JAVASCRIPT INTERFACE
+// ========================================
+
 extern "C" {
 
 EMSCRIPTEN_KEEPALIVE
-void updateSimulation(float amount) {
-    simulationValue += amount;
+bool initialiseEngine() {
+
+    return engine.initialise();
+
 }
 
-// Return the current simulation value.
 EMSCRIPTEN_KEEPALIVE
-float getSimulationValue() {
-    return simulationValue;
+void updateEngine(float deltaTime) {
+
+    engine.update(deltaTime);
+
+}
+
+EMSCRIPTEN_KEEPALIVE
+void shutdownEngine() {
+
+    engine.shutdown();
+
+}
+
+EMSCRIPTEN_KEEPALIVE
+bool isEngineRunning() {
+
+    return engine.isRunning();
+
 }
 
 }
@@ -30,6 +51,9 @@ float getSimulationValue() {
 // ========================================
 
 int main() {
-    simulationValue = 0.0f;
+
+    engine.initialise();
+
     return 0;
+
 }
