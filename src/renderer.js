@@ -3,6 +3,7 @@
 
 import * as THREE from 'three';
 import { initialiseEnvironment } from './g2.js';
+import { initialiseStarfield } from './g3.js';
 
 // ========================================
 // RENDERER STATE
@@ -48,6 +49,8 @@ export function initialiseRenderer(container) {
     );
 
     container.appendChild(renderer.domElement);
+
+    initialiseStarfield(camera);
 
     // ========================================
     // LIGHTING
