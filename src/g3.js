@@ -44,91 +44,70 @@ function randomPointOnSphere(radius) {
 // STAR GENERATION
 // ========================================
 
-
-
-function generateStarPositions() {
+function generateStarPositions(camera) {
 
     const positions = [];
 
-    const cellSize = MIN_STAR_DISTANCE / Math.sqrt(3);
-    const cells = new Map();
-
-    const key = (x, y, z) => {
-        return `${x},${y},${z}`;
-    };
-
-    function getCell(position) {
-        return [
-            Math.floor(position.x / cellSize),
-            Math.floor(position.y / cellSize),
-            Math.floor(position.z / cellSize)
-        ];
-    }
+    const distance = STAR_RADIUS;
+    const minDistance = MIN_STAR_DISTANCE;
 
     const minDistanceSquared =
-        MIN_STAR_DISTANCE * MIN_STAR_DISTANCE;
+        minDistance * minDistance;
+
+    const aspect = camera.aspect;
+    const halfFov = THREE.MathUtils.degToRad(
+        camera.fov / 2
+    );
+
+    const halfHeight = Math.tan(halfFov) * distance;
+    const halfWidth = halfHeight * aspect;
+
+    // Extend beyond the viewport edges.
+    const coverage = 1.25;
+
+    const width = halfWidth * coverage;
+    const height = halfHeight * coverage;
 
     let attempts = 0;
+    const maxAttempts = 150000;
 
     while (
         positions.length < STAR_COUNT &&
-        attempts < MAX_ATTEMPTS
+        attempts < maxAttempts
     ) {
 
         attempts++;
 
-        const candidate =
-            randomPointOnSphere(STAR_RADIUS);
-
-        const [cx, cy, cz] = getCell(candidate);
+        const candidate = new THREE.Vector3(
+            (Math.random() * 2 - 1) * width,
+            (Math.random() * 2 - 1) * height,
+            -distance
+        );
 
         let valid = true;
 
-        // Check nearby spatial cells.
-        for (let x = cx - 2; x <= cx + 2 && valid; x++) {
-            for (let y = cy - 2; y <= cy + 2 && valid; y++) {
-                for (let z = cz - 2; z <= cz + 2; z++) {
+        for (const existing of positions) {
 
-                    const nearby = cells.get(key(x, y, z));
-
-                    if (!nearby) continue;
-
-                    for (const existing of nearby) {
-
-                        if (
-                            candidate.distanceToSquared(existing) <
-                            minDistanceSquared
-                        ) {
-                            valid = false;
-                            break;
-                        }
-                    }
-
-                    if (!valid) break;
-                }
+            if (
+                candidate.distanceToSquared(existing) <
+                minDistanceSquared
+            ) {
+                valid = false;
+                break;
             }
         }
 
-        if (!valid) continue;
-
-        positions.push(candidate);
-
-        const cellKey = key(cx, cy, cz);
-
-        if (!cells.has(cellKey)) {
-            cells.set(cellKey, []);
+        if (valid) {
+            positions.push(candidate);
         }
-
-        cells.get(cellKey).push(candidate);
     }
 
     console.log(
-        `[NOS] Generated ${positions.length} randomly distributed stars.`
+        `[NOS] Generated ${positions.length} viewport stars.`
     );
 
     return positions;
 }
-
 
 // ========================================
 // STARFIELD CREATION
