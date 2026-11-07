@@ -10,6 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(nos_core
     cpp/main.cpp
+    cpp/core/g1.cpp
 )
 
 set_target_properties(nos_core PROPERTIES
