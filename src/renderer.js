@@ -34,6 +34,8 @@ export function initialiseRenderer(container) {
 
     camera.position.set(0, 0, 5);
 
+    scene.add(camera);
+
     // Renderer
     renderer = new THREE.WebGLRenderer({
         antialias: true
