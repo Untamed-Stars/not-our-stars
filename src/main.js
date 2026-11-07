@@ -1,10 +1,13 @@
 
-// main.js - NOT OUR STARS APPLICATION ENTRY POINT
+ // ========================================
+ // NOT OUR STARS
+ // main.js - APPLICATION ENTRY POINT
+ // ========================================
 
 import {
     initialiseCore,
-    updateSimulation,
-    getSimulationValue
+    initialiseEngine,
+    updateEngine
 } from './bridge.js';
 
 import {
@@ -25,9 +28,14 @@ let running = false;
 
 async function initialiseGame() {
 
-    const loadingStatus = document.getElementById('loading-status');
-    const loadingScreen = document.getElementById('loading-screen');
-    const canvasContainer = document.getElementById('game-canvas');
+    const loadingStatus =
+        document.getElementById('loading-status');
+
+    const loadingScreen =
+        document.getElementById('loading-screen');
+
+    const canvasContainer =
+        document.getElementById('game-canvas');
 
     try {
 
@@ -35,30 +43,32 @@ async function initialiseGame() {
 
         await initialiseCore();
 
+        loadingStatus.textContent = 'Starting engine...';
+
+        initialiseEngine();
+
         loadingStatus.textContent = 'Initialising renderer...';
 
         initialiseRenderer(canvasContainer);
 
-        loadingStatus.textContent = 'Starting simulation...';
-
-        // Initial C++ simulation update
-        updateSimulation(20);
-
         running = true;
         lastFrame = performance.now();
 
-        // Hide loading screen
         loadingScreen.classList.add('hidden');
 
-        console.log('[NOS] Architecture test running.');
+        console.log('[NOS] Engine running.');
 
         requestAnimationFrame(gameLoop);
 
     } catch (error) {
 
-        console.error('[NOS] INITIALISATION FAILED:', error);
+        console.error(
+            '[NOS] INITIALISATION FAILED:',
+            error
+        );
 
-        loadingStatus.textContent = 'Engine initialisation failed. Check console.';
+        loadingStatus.textContent =
+            'Engine initialisation failed. Check console.';
     }
 }
 
@@ -79,11 +89,11 @@ function gameLoop(now) {
 
     lastFrame = now;
 
-    // Read simulation state from C++
-    const simulationValue = getSimulationValue();
+    // Update C++ engine
+    updateEngine(deltaTime);
 
-    // Update visual representation
-    updateRenderer(deltaTime, simulationValue);
+    // Update visual renderer
+    updateRenderer(deltaTime, 0);
 }
 
 // ========================================
