@@ -1,58 +1,30 @@
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="theme-color" content="#0c0c0c">
+    <meta name="description" content="Not Our Stars - An expansive sci-fi exploration game.">
+
     <title>Not Our Stars</title>
 
-    <link rel="stylesheet" href="head.html">
+    <link rel="stylesheet" href="/not-our-stars/style.css">
 </head>
 
 <body>
+    <main id="game-container">
+        <section id="game-section">
+            <div id="loading-screen">
+                <h1>NOT OUR STARS</h1>
+                <p id="loading-status">Preparing architecture test...</p>
+            </div>
 
-    <div id="game-root">
+            <div id="game-canvas"></div>
+        </section>
+    </main>
 
-        <div id="head-container"></div>
-        <div id="body-container"></div>
-
-    </div>
-
-    <script type="importmap">
-      {
-          "imports": {
-              "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"
-          }
-      }
-  </script>
-
-  <script type="module">
-    async function loadFragment(id, file) {
-        const response = await fetch(file);
-
-        if (!response.ok) {
-            throw new Error(`Failed to load ${file}`);
-        }
-
-        document.getElementById(id).innerHTML =
-            await response.text();
-    }
-
-    try {
-        await loadFragment('head-container', 'head.html');
-        await loadFragment('body-container', 'body.html');
-
-        await import('./js/g1.js');
-        await import('./js/g2.js');
-        await import('./js/g3.js');
-        await import('./js/g4.js');
-        await import('./js/g5.js');
-
-    } catch (error) {
-        console.error('NOS INITIALISATION ERROR:', error);
-    }
-</script>
-
+    <script type="module" src="/not-our-stars/src/main.js"></script>
 </body>
 </html>
