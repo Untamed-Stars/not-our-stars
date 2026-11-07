@@ -1,5 +1,8 @@
 
-// bridge.js - C++ / WEBASSEMBLY COMMUNICATION BRIDGE
+ // ========================================
+ // NOT OUR STARS
+ // bridge.js - C++ / WEBASSEMBLY BRIDGE
+ // ========================================
 
 let core = null;
 
@@ -9,14 +12,13 @@ let core = null;
 
 export async function initialiseCore() {
 
-    // Load the compiled WebAssembly JavaScript module.
-    const modulePath = `${import.meta.env.BASE_URL}wasm/nos_core.js`;
+    const modulePath =
+        `${import.meta.env.BASE_URL}wasm/nos_core.js`;
 
     const { default: createCore } = await import(
         /* @vite-ignore */ modulePath
     );
 
-    // Initialise the C++ module.
     core = await createCore({
         locateFile: (path) =>
             `${import.meta.env.BASE_URL}wasm/${path}`
@@ -28,23 +30,49 @@ export async function initialiseCore() {
 }
 
 // ========================================
-// SIMULATION COMMUNICATION
+// ENGINE FUNCTIONS
 // ========================================
 
-export function updateSimulation(amount) {
+export function initialiseEngine() {
 
     if (!core) {
         throw new Error('NOS core has not been initialised.');
     }
 
-    core._updateSimulation(amount);
+    return core._initialiseEngine();
+}
+
+export function updateEngine(deltaTime) {
+
+    if (!core) {
+        throw new Error('NOS core has not been initialised.');
+    }
+
+    core._updateEngine(deltaTime);
+}
+
+export function shutdownEngine() {
+
+    if (!core) return;
+
+    core._shutdownEngine();
+}
+
+export function isEngineRunning() {
+
+    if (!core) return false;
+
+    return core._isEngineRunning();
+}
+
+// ========================================
+// TEMPORARY LEGACY COMPATIBILITY
+// ========================================
+
+export function updateSimulation() {
+    // Removed. The application will use updateEngine().
 }
 
 export function getSimulationValue() {
-
-    if (!core) {
-        throw new Error('NOS core has not been initialised.');
-    }
-
-    return core._getSimulationValue();
+    return 0;
 }
