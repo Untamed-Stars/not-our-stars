@@ -41,7 +41,7 @@ jobs:
         run: npm install
 
       - name: Configure C++ build
-        run: emcmake cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+        run: emcmake cmake -S . -B build --fresh -DCMAKE_BUILD_TYPE=Release
 
       - name: Compile C++ to WebAssembly
         run: cmake --build build --config Release
