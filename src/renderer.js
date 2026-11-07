@@ -2,6 +2,7 @@
 // renderer.js - THREE.JS RENDERING SYSTEM
 
 import * as THREE from 'three';
+import { initialiseEnvironment } from './g2.js';
 
 // ========================================
 // RENDERER STATE
@@ -20,7 +21,7 @@ export function initialiseRenderer(container) {
 
     // Scene
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0c0c0c);
+    initialiseEnvironment(scene);
 
     // Camera
     camera = new THREE.PerspectiveCamera(
