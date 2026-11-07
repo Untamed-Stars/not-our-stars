@@ -10,10 +10,17 @@ import * as THREE from 'three';
 // STARFIELD SETTINGS
 // ========================================
 
-const STAR_COUNT = 700;
+const STAR_COUNT = 1500;
 const STAR_RADIUS = 850;
-const MIN_STAR_DISTANCE = 42;
-const MAX_ATTEMPTS = 100000;
+const MIN_STAR_DISTANCE = 30;
+const MAX_ATTEMPTS = 150000;
+
+// Star size categories, in pixels.
+const STAR_SIZES = {
+    small: 1.3,
+    medium: 1.8,
+    large: 2.4
+};
 
 // ========================================
 // RANDOM STAR POSITION
@@ -40,6 +47,7 @@ function randomPointOnSphere(radius) {
 function generateStarPositions() {
 
     const positions = [];
+
     const minimumDistanceSquared =
         MIN_STAR_DISTANCE * MIN_STAR_DISTANCE;
 
@@ -57,7 +65,6 @@ function generateStarPositions() {
 
         let valid = true;
 
-        // Check separation from existing stars.
         for (const existing of positions) {
 
             if (
@@ -82,37 +89,34 @@ function generateStarPositions() {
 }
 
 // ========================================
-// INITIALISE STARFIELD
+// STARFIELD CREATION
 // ========================================
 
-export function initialiseStarfield(camera) {
+function createStarGroup(stars, size, opacity) {
 
-    const positions = generateStarPositions();
+    if (stars.length === 0) return null;
 
     const geometry = new THREE.BufferGeometry();
 
     const positionArray = new Float32Array(
-        positions.length * 3
+        stars.length * 3
     );
 
     const colorArray = new Float32Array(
-        positions.length * 3
+        stars.length * 3
     );
 
-    for (let i = 0; i < positions.length; i++) {
+    for (let i = 0; i < stars.length; i++) {
 
-        const star = positions[i];
+        const star = stars[i];
 
-        positionArray[i * 3] = star.x;
-        positionArray[i * 3 + 1] = star.y;
-        positionArray[i * 3 + 2] = star.z;
+        positionArray[i * 3] = star.position.x;
+        positionArray[i * 3 + 1] = star.position.y;
+        positionArray[i * 3 + 2] = star.position.z;
 
-        // Mostly white, with subtle blue variation.
-        const blueTint = Math.random() * 0.18;
-
-        colorArray[i * 3] = 1.0 - blueTint * 0.4;
-        colorArray[i * 3 + 1] = 1.0 - blueTint * 0.2;
-        colorArray[i * 3 + 2] = 1.0;
+        colorArray[i * 3] = star.brightness;
+        colorArray[i * 3 + 1] = star.brightness;
+        colorArray[i * 3 + 2] = star.brightness;
     }
 
     geometry.setAttribute(
@@ -127,7 +131,7 @@ export function initialiseStarfield(camera) {
 
     const material = new THREE.PointsMaterial({
 
-        size: 1.7,
+        size,
 
         sizeAttenuation: false,
 
@@ -135,7 +139,7 @@ export function initialiseStarfield(camera) {
 
         transparent: true,
 
-        opacity: 0.9,
+        opacity,
 
         depthWrite: false,
 
@@ -143,15 +147,67 @@ export function initialiseStarfield(camera) {
 
     });
 
-    const starfield = new THREE.Points(
-        geometry,
-        material
-    );
+    return new THREE.Points(geometry, material);
+}
 
-    // Keep stars centred around the camera.
-    camera.add(starfield);
+// ========================================
+// INITIALISE STARFIELD
+// ========================================
+
+export function initialiseStarfield(camera) {
+
+    const positions = generateStarPositions();
+
+    const groups = {
+        small: [],
+        medium: [],
+        large: []
+    };
+
+    // Assign each star a size and brightness.
+    for (const position of positions) {
+
+        const roll = Math.random();
+
+        let category;
+
+        if (roll < 0.72) {
+            category = 'small';
+        } else if (roll < 0.95) {
+            category = 'medium';
+        } else {
+            category = 'large';
+        }
+
+        let brightness;
+
+        if (category === 'small') {
+            brightness = 0.45 + Math.random() * 0.3;
+        } else if (category === 'medium') {
+            brightness = 0.7 + Math.random() * 0.25;
+        } else {
+            brightness = 0.9 + Math.random() * 0.1;
+        }
+
+        groups[category].push({
+            position,
+            brightness
+        });
+    }
+
+    // Create the three star layers.
+    for (const category of Object.keys(groups)) {
+
+        const starGroup = createStarGroup(
+            groups[category],
+            STAR_SIZES[category],
+            1.0
+        );
+
+        if (starGroup) {
+            camera.add(starGroup);
+        }
+    }
 
     console.log('[NOS] Starfield initialised.');
-
-    return starfield;
 }
