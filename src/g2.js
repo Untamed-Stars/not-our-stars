@@ -46,4 +46,3 @@ export function initialiseEnvironment(scene) {
         sunlight
     };
 }
-sss
