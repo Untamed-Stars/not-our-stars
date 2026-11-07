@@ -246,7 +246,7 @@ function createStarGroup(stars, size) {
         positions[i * 3 + 2] = position.z;
 
         // Subtle white and blue variation.
-        const blueTint = Math.random() * 0.08;
+        const blueTint = star.brightness * 0.04;
 
         colors[i * 3] =
             star.brightness;
