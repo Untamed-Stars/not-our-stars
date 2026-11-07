@@ -42,7 +42,7 @@ async function initialiseGame() {
         loadingStatus.textContent = 'Starting simulation...';
 
         // Initial C++ simulation update
-        updateSimulation(5);
+        updateSimulation(20);
 
         running = true;
         lastFrame = performance.now();
