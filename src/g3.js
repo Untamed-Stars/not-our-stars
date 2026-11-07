@@ -45,48 +45,85 @@ function randomPointOnSphere(radius) {
 // ========================================
 
 
+
 function generateStarPositions() {
 
     const positions = [];
 
-    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+    const cellSize = MIN_STAR_DISTANCE / Math.sqrt(3);
+    const cells = new Map();
 
-    for (let i = 0; i < STAR_COUNT; i++) {
+    const key = (x, y, z) => {
+        return `${x},${y},${z}`;
+    };
 
-        // Evenly distribute points over a sphere.
-        const y = 1 - (i / (STAR_COUNT - 1)) * 2;
+    function getCell(position) {
+        return [
+            Math.floor(position.x / cellSize),
+            Math.floor(position.y / cellSize),
+            Math.floor(position.z / cellSize)
+        ];
+    }
 
-        const radius = Math.sqrt(1 - y * y);
+    const minDistanceSquared =
+        MIN_STAR_DISTANCE * MIN_STAR_DISTANCE;
 
-        const theta = goldenAngle * i;
+    let attempts = 0;
 
-        // Slight positional variation.
-        const jitter = 0.012;
+    while (
+        positions.length < STAR_COUNT &&
+        attempts < MAX_ATTEMPTS
+    ) {
 
-        const x =
-            Math.cos(theta) * radius +
-            (Math.random() - 0.5) * jitter;
+        attempts++;
 
-        const z =
-            Math.sin(theta) * radius +
-            (Math.random() - 0.5) * jitter;
+        const candidate =
+            randomPointOnSphere(STAR_RADIUS);
 
-        const adjustedY =
-            y + (Math.random() - 0.5) * jitter;
+        const [cx, cy, cz] = getCell(candidate);
 
-        const direction = new THREE.Vector3(
-            x,
-            adjustedY,
-            z
-        ).normalize();
+        let valid = true;
 
-        positions.push(
-            direction.multiplyScalar(STAR_RADIUS)
-        );
+        // Check nearby spatial cells.
+        for (let x = cx - 2; x <= cx + 2 && valid; x++) {
+            for (let y = cy - 2; y <= cy + 2 && valid; y++) {
+                for (let z = cz - 2; z <= cz + 2; z++) {
+
+                    const nearby = cells.get(key(x, y, z));
+
+                    if (!nearby) continue;
+
+                    for (const existing of nearby) {
+
+                        if (
+                            candidate.distanceToSquared(existing) <
+                            minDistanceSquared
+                        ) {
+                            valid = false;
+                            break;
+                        }
+                    }
+
+                    if (!valid) break;
+                }
+            }
+        }
+
+        if (!valid) continue;
+
+        positions.push(candidate);
+
+        const cellKey = key(cx, cy, cz);
+
+        if (!cells.has(cellKey)) {
+            cells.set(cellKey, []);
+        }
+
+        cells.get(cellKey).push(candidate);
     }
 
     console.log(
-        `[NOS] Generated ${positions.length} distributed stars.`
+        `[NOS] Generated ${positions.length} randomly distributed stars.`
     );
 
     return positions;
