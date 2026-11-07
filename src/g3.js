@@ -44,49 +44,54 @@ function randomPointOnSphere(radius) {
 // STAR GENERATION
 // ========================================
 
+
 function generateStarPositions() {
 
     const positions = [];
 
-    const minimumDistanceSquared =
-        MIN_STAR_DISTANCE * MIN_STAR_DISTANCE;
+    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
 
-    let attempts = 0;
+    for (let i = 0; i < STAR_COUNT; i++) {
 
-    while (
-        positions.length < STAR_COUNT &&
-        attempts < MAX_ATTEMPTS
-    ) {
+        // Evenly distribute points over a sphere.
+        const y = 1 - (i / (STAR_COUNT - 1)) * 2;
 
-        attempts++;
+        const radius = Math.sqrt(1 - y * y);
 
-        const candidate =
-            randomPointOnSphere(STAR_RADIUS);
+        const theta = goldenAngle * i;
 
-        let valid = true;
+        // Slight positional variation.
+        const jitter = 0.012;
 
-        for (const existing of positions) {
+        const x =
+            Math.cos(theta) * radius +
+            (Math.random() - 0.5) * jitter;
 
-            if (
-                candidate.distanceToSquared(existing) <
-                minimumDistanceSquared
-            ) {
-                valid = false;
-                break;
-            }
-        }
+        const z =
+            Math.sin(theta) * radius +
+            (Math.random() - 0.5) * jitter;
 
-        if (valid) {
-            positions.push(candidate);
-        }
+        const adjustedY =
+            y + (Math.random() - 0.5) * jitter;
+
+        const direction = new THREE.Vector3(
+            x,
+            adjustedY,
+            z
+        ).normalize();
+
+        positions.push(
+            direction.multiplyScalar(STAR_RADIUS)
+        );
     }
 
     console.log(
-        `[NOS] Generated ${positions.length} separated stars.`
+        `[NOS] Generated ${positions.length} distributed stars.`
     );
 
     return positions;
 }
+
 
 // ========================================
 // STARFIELD CREATION
