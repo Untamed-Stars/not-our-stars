@@ -177,7 +177,7 @@ function createStarGroup(stars, size, opacity) {
 
 export function initialiseStarfield(camera) {
 
-    const positions = generateStarPositions();
+    const positions = generateStarPositions(camera);
 
     const groups = {
         small: [],
