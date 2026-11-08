@@ -3,7 +3,10 @@
 
 import * as THREE from 'three';
 import { initialiseEnvironment } from './g2.js';
-import { initialiseStarfield } from './g3.js';
+import {
+    initialiseStarfield,
+    updateStarfield
+} from './g3.js';
 
 // ========================================
 // RENDERER STATE
@@ -13,6 +16,7 @@ let scene;
 let camera;
 let renderer;
 let cube;
+let starfield;
 
 // ========================================
 // INITIALISE SCENE
@@ -35,6 +39,8 @@ export function initialiseRenderer(container) {
     camera.position.set(0, 0, 5);
 
     scene.add(camera);
+   
+    starfield = initialiseStarfield(scene, camera);
 
     // Renderer
     renderer = new THREE.WebGLRenderer({
@@ -111,6 +117,8 @@ export function updateRenderer(deltaTime, simulationValue) {
     const scale = 1 + Math.min(simulationValue * 0.02, 0.5);
 
     cube.scale.setScalar(scale);
+
+    updateStarfield(starfield, camera);
 
     renderer.render(scene, camera);
 }
