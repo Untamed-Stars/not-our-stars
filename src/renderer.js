@@ -1,15 +1,3 @@
-
-// renderer.js - THREE.JS RENDERING SYSTEM
-
-import * as THREE from 'three';
-import { initialiseEnvironment } from './g2.js';
-import {
-    initialiseStarfield,
-    updateStarfield
-} from './g3.js';
-
-// ========================================
-// RENDERER STATE
 // renderer.js - THREE.JS RENDERING SYSTEM
 
 import * as THREE from 'three';
