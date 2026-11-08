@@ -1,28 +1,27 @@
 
- // ========================================
- // NOT OUR STARS
- // g3.js - PROCEDURAL CELESTIAL STARFIELD
- // ========================================
+// ========================================
+// NOT OUR STARS
+// g3.js - PERSISTENT PROCEDURAL STARFIELD
+// ========================================
 
 import * as THREE from 'three';
 
 // ========================================
-// STARFIELD SETTINGS
+// CONFIGURATION
 // ========================================
 
-const STAR_COUNT = 6000;
+const STAR_COUNT = 7000;
 const STAR_RADIUS = 900;
 
-const MIN_ANGULAR_DISTANCE = 0.018;
-
-const MAX_ATTEMPTS = 100000;
-
 const STAR_SEED = 734921;
+
+const MIN_ANGULAR_DISTANCE = 0.018;
+const MAX_ATTEMPTS = 1000000;
 
 const STAR_SIZES = {
     small: 1.3,
     medium: 1.9,
-    large: 2.5
+    large: 2.7
 };
 
 // ========================================
@@ -56,7 +55,7 @@ function createRandom(seed) {
 }
 
 // ========================================
-// RANDOM UNIT VECTOR
+// RANDOM SPHERICAL DIRECTION
 // ========================================
 
 function randomDirection(random) {
@@ -64,7 +63,9 @@ function randomDirection(random) {
     const y = random() * 2 - 1;
     const angle = random() * Math.PI * 2;
 
-    const horizontal = Math.sqrt(1 - y * y);
+    const horizontal = Math.sqrt(
+        1 - y * y
+    );
 
     return new THREE.Vector3(
         Math.cos(angle) * horizontal,
@@ -74,7 +75,7 @@ function randomDirection(random) {
 }
 
 // ========================================
-// STAR DISTRIBUTION
+// SPATIAL GRID
 // ========================================
 
 function generateStars() {
@@ -82,6 +83,7 @@ function generateStars() {
     const random = createRandom(STAR_SEED);
 
     const stars = [];
+    const spatialGrid = new Map();
 
     const cellSize =
         MIN_ANGULAR_DISTANCE / Math.sqrt(3);
@@ -90,9 +92,7 @@ function generateStars() {
         MIN_ANGULAR_DISTANCE *
         MIN_ANGULAR_DISTANCE;
 
-    const spatialGrid = new Map();
-
-    function getCell(direction) {
+    function cellCoordinates(direction) {
 
         return [
             Math.floor(direction.x / cellSize),
@@ -102,10 +102,15 @@ function generateStars() {
     }
 
     function cellKey(x, y, z) {
+
         return `${x},${y},${z}`;
     }
 
     let attempts = 0;
+
+    // ====================================
+    // GENERATE DISTRIBUTION
+    // ====================================
 
     while (
         stars.length < STAR_COUNT &&
@@ -116,28 +121,19 @@ function generateStars() {
 
         const direction = randomDirection(random);
 
-        const [cx, cy, cz] = getCell(direction);
+        const [cx, cy, cz] =
+            cellCoordinates(direction);
 
         let valid = true;
 
         // Check neighbouring spatial cells.
-        for (
-            let x = cx - 2;
-            x <= cx + 2 && valid;
-            x++
-        ) {
+        // This prevents excessive clustering.
 
-            for (
-                let y = cy - 2;
-                y <= cy + 2 && valid;
-                y++
-            ) {
+        for (let x = cx - 2; x <= cx + 2 && valid; x++) {
 
-                for (
-                    let z = cz - 2;
-                    z <= cz + 2;
-                    z++
-                ) {
+            for (let y = cy - 2; y <= cy + 2 && valid; y++) {
+
+                for (let z = cz - 2; z <= cz + 2; z++) {
 
                     const nearby = spatialGrid.get(
                         cellKey(x, y, z)
@@ -164,11 +160,11 @@ function generateStars() {
 
         if (!valid) continue;
 
-        // Accept this star.
         stars.push({
             direction,
             brightness: 0,
-            size: 'small'
+            size: 'small',
+            color: new THREE.Color()
         });
 
         const key = cellKey(cx, cy, cz);
@@ -180,36 +176,45 @@ function generateStars() {
         spatialGrid.get(key).push(direction);
     }
 
-    // Assign size and brightness.
+    // ====================================
+    // STAR APPEARANCE
+    // ====================================
+
     for (const star of stars) {
 
         const roll = random();
 
-        if (roll < 0.72) {
+        if (roll < 0.74) {
 
             star.size = 'small';
+            star.brightness = 0.45 + random() * 0.35;
 
-            star.brightness =
-                0.45 + random() * 0.3;
-
-        } else if (roll < 0.95) {
+        } else if (roll < 0.96) {
 
             star.size = 'medium';
-
-            star.brightness =
-                0.7 + random() * 0.25;
+            star.brightness = 0.65 + random() * 0.3;
 
         } else {
 
             star.size = 'large';
-
-            star.brightness =
-                0.9 + random() * 0.1;
+            star.brightness = 0.85 + random() * 0.15;
         }
+
+        const temperature = random();
+
+        star.color.setHex(
+            temperature < 0.2
+                ? 0xc5d9ff
+                : temperature > 0.85
+                    ? 0xffe2bd
+                    : 0xffffff
+        );
+
+        star.color.multiplyScalar(star.brightness);
     }
 
     console.log(
-        `[NOS] Generated ${stars.length} persistent stars.`
+        `[NOS] Generated ${stars.length}/${STAR_COUNT} stars in ${attempts} attempts.`
     );
 
     return stars;
@@ -245,17 +250,9 @@ function createStarGroup(stars, size) {
         positions[i * 3 + 1] = position.y;
         positions[i * 3 + 2] = position.z;
 
-        // Subtle white and blue variation.
-        const blueTint = star.brightness * 0.04;
-
-        colors[i * 3] =
-            star.brightness;
-
-        colors[i * 3 + 1] =
-            star.brightness - blueTint;
-
-        colors[i * 3 + 2] =
-            star.brightness;
+        colors[i * 3] = star.color.r;
+        colors[i * 3 + 1] = star.color.g;
+        colors[i * 3 + 2] = star.color.b;
     }
 
     geometry.setAttribute(
@@ -282,11 +279,15 @@ function createStarGroup(stars, size) {
 
         depthWrite: false,
 
-        fog: false
+        fog: false,
 
+        toneMapped: false
     });
 
-    return new THREE.Points(geometry, material);
+    return new THREE.Points(
+        geometry,
+        material
+    );
 }
 
 // ========================================
@@ -294,6 +295,13 @@ function createStarGroup(stars, size) {
 // ========================================
 
 export function initialiseStarfield(scene, camera) {
+
+    if (!scene || !camera) {
+
+        throw new Error(
+            '[NOS] Starfield requires a scene and camera.'
+        );
+    }
 
     const stars = generateStars();
 
@@ -309,7 +317,8 @@ export function initialiseStarfield(scene, camera) {
 
     const starfield = new THREE.Group();
 
-    // Create the three star-size layers.
+    starfield.name = 'NOS_Celestial_Starfield';
+
     for (const category of Object.keys(groups)) {
 
         const points = createStarGroup(
@@ -322,25 +331,32 @@ export function initialiseStarfield(scene, camera) {
         }
     }
 
-    // Start at the camera's world position.
+    // Follow the camera's world position.
+    // Do NOT attach the starfield to the camera.
+
     camera.getWorldPosition(starfield.position);
 
-    // Add to the scene, NOT the camera.
+    starfield.rotation.set(0, 0, 0);
+
     scene.add(starfield);
 
-    console.log('[NOS] Persistent starfield initialised.');
+    console.log(
+        '[NOS] Celestial starfield initialised.'
+    );
 
     return starfield;
 }
 
 // ========================================
-// UPDATE STARFIELD POSITION
+// UPDATE STARFIELD
 // ========================================
 
 export function updateStarfield(starfield, camera) {
 
-    if (!starfield) return;
+    if (!starfield || !camera) return;
 
-    // Follow camera position without following rotation.
+    // Follow translation only.
+    // Camera rotation never affects star positions.
+
     camera.getWorldPosition(starfield.position);
 }
