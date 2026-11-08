@@ -57,8 +57,6 @@ export function initialiseRenderer(container) {
 
     container.appendChild(renderer.domElement);
 
-    initialiseStarfield(camera);
-
     // ========================================
     // LIGHTING
     // ========================================
