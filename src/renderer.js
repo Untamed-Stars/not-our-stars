@@ -6,6 +6,7 @@ import {
     initialiseStarfield,
     updateStarfield
 } from './g3.js';
+import { generatePlanet } from './g4.js';
 
 // ========================================
 // RENDERER STATE
@@ -15,6 +16,7 @@ let scene;
 let camera;
 let renderer;
 let starfield;
+let planet;
 
 // ========================================
 // INITIALISE SCENE
@@ -26,6 +28,8 @@ export function initialiseRenderer(container) {
     scene = new THREE.Scene();
     initialiseEnvironment(scene);
 
+    planet = generatePlanet(scene, 12345);
+
     // Camera
     camera = new THREE.PerspectiveCamera(
         75,
@@ -34,7 +38,8 @@ export function initialiseRenderer(container) {
         1000
     );
 
-    camera.position.set(0, 0, 5);
+    camera.position.set(0, 0, 25);
+    camera.lookAt(0, 0, 0);
 
     scene.add(camera);
    
