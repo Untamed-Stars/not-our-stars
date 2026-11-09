@@ -75,6 +75,12 @@ export function initialiseRenderer(container) {
     directionalLight.position.set(4, 5, 3);
     scene.add(directionalLight);
 
+    // Resize handling
+    window.addEventListener('resize', resizeRenderer);
+
+    console.log('[NOS] Three.js renderer initialised.');
+}
+
 // ========================================
 // UPDATE
 // ========================================
