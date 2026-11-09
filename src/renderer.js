@@ -14,7 +14,6 @@ import {
 let scene;
 let camera;
 let renderer;
-let cube;
 let starfield;
 
 // ========================================
@@ -76,28 +75,6 @@ export function initialiseRenderer(container) {
     directionalLight.position.set(4, 5, 3);
     scene.add(directionalLight);
 
-    // ========================================
-    // TEST OBJECT
-    // ========================================
-
-    const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
-
-    const material = new THREE.MeshStandardMaterial({
-        color: 0x9a5835,
-        roughness: 0.55,
-        metalness: 0.25
-    });
-
-    cube = new THREE.Mesh(geometry, material);
-
-    scene.add(cube);
-
-    // Resize handling
-    window.addEventListener('resize', resizeRenderer);
-
-    console.log('[NOS] Three.js renderer initialised.');
-}
-
 // ========================================
 // UPDATE
 // ========================================
@@ -105,15 +82,6 @@ export function initialiseRenderer(container) {
 export function updateRenderer(deltaTime, simulationValue) {
 
     if (!renderer) return;
-
-    // Rotate the cube
-    cube.rotation.x += deltaTime * 0.5;
-    cube.rotation.y += deltaTime * 0.8;
-
-    // Use the C++ simulation value to influence its scale
-    const scale = 1 + Math.min(simulationValue * 0.02, 0.5);
-
-    cube.scale.setScalar(scale);
 
     updateStarfield(starfield, camera);
 
